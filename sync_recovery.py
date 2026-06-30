@@ -99,4 +99,31 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
+    # ==========================================
+        # ĐẨY DỮ LIỆU LÊN GOOGLE SHEETS
+        # ==========================================
+        webapp_url = os.getenv("WEBAPP_URL")
+        
+        if webapp_url:
+            import requests
+            
+            # Đóng gói dữ liệu thành JSON
+            payload = {
+                "date": today,
+                "rhr": resting_hr,
+                "hrv": hrv_val,
+                "sleep_hours": sleep_duration,
+                "sleep_score": sleep_score,
+                "body_battery": bb_str,
+                "readiness": readiness_score,
+                "steps": steps
+            }
+            
+            print("- Đang gửi dữ liệu lên Google Sheets...")
+            response = requests.post(webapp_url, json=payload)
+            
+            if response.status_code == 200:
+                print(f"[THÀNH CÔNG] Đã cập nhật dòng dữ liệu mới vào Google Sheets.")
+            else:
+                print(f"[LỖI] Phản hồi từ server: {response.text}")
     main()
