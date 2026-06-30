@@ -1,0 +1,38 @@
+name: Backfill toàn bộ lịch sử chạy bộ
+
+on:
+  workflow_dispatch:
+    inputs:
+      backfill_limit:
+        description: "Giới hạn số activity quét qua (0 = quét hết toàn bộ tài khoản)"
+        required: false
+        default: "0"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cài đặt thư viện
+        run: pip install -r requirements.txt
+
+      - name: Chạy backfill
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
+          BACKFILL_LIMIT: ${{ github.event.inputs.backfill_limit }}
+        run: python backfill_runs.py
+
+      - name: Lưu bản backup JSON làm artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: garmin-running-backup
+          path: garmin_daily/all_running_activities_backup.json
+          retention-days: 90
