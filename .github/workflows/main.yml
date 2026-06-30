@@ -1,0 +1,41 @@
+name: Garmin Daily Sync
+
+on:
+  schedule:
+    # Chạy tự động vào 22:00 UTC mỗi ngày (tương đương 5:00 sáng giờ Việt Nam)
+    - cron: '0 22 * * *'
+  workflow_dispatch: # Thêm dòng này để bạn có thể bấm nút chạy thử thủ công
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    
+    # Cấp quyền ghi để Action có thể lưu file .md ngược lại vào kho lưu trữ
+    permissions:
+      contents: write
+
+    steps:
+      - name: Lấy mã nguồn từ Repository
+        uses: actions/checkout@v4
+
+      - name: Cài đặt Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cài đặt thư viện
+        run: pip install -r requirements.txt
+
+      - name: Chạy Script đồng bộ dữ liệu Garmin
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+        run: python sync_recovery.py
+
+      - name: Lưu trữ file báo cáo (Markdown) vào GitHub
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add garmin_daily/
+          git commit -m "Báo cáo phục hồi ngày $(date +'%Y-%m-%d')" || echo "Không có thay đổi dữ liệu"
+          git push
